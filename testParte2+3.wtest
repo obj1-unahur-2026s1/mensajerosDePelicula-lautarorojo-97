@@ -1,0 +1,103 @@
+import paquetes.*
+import destinos.*
+import mensajeros.*
+import vehiculos.*
+import mensajeria.*
+
+
+describe "Parte 2: Empresa de Mensajeria" {
+    
+    method initialize() {
+        empresa.despedirATodos() // Arrancamos con la empresa vacía
+        empresa.contratarUnMensajero(roberto)
+        empresa.contratarUnMensajero(chuckNurris)
+        empresa.contratarUnMensajero(neo)
+    }
+    
+    test "La empresa es grande al tener 3 mensajeros" {
+        assert.that(empresa.esGrande())
+    }
+    
+    test "Se puede despedir a un mensajero y la empresa deja de ser grande" {
+        empresa.despedirUnMensajero(neo)
+        assert.notThat(empresa.esGrande())
+    }
+    
+    test "El paquete puede ser entregado por el primer empleado (Roberto en bici a Brooklyn)" {
+        roberto.cambiarVehiculo(bicicleta)
+        paquetes.registrarPago()
+        paquetes.cambiarDestino(brooklyn)
+        
+        assert.that(empresa.puedeSerEntregadoPorElPrimerMensajero(paquetes))
+    }
+    
+    test "El peso del ultimo mensajero de la empresa (Neo) es 0" {
+        assert.equals(0, empresa.pesoUltimoMensajero())
+    }
+}
+
+describe "Parte 3: Mensajeria Recargada" {
+    
+    method initialize() {
+        empresa.despedirATodos()
+        // Borramos los pendientes vaciando la lista
+        empresa.paquetesPendientes().clear() 
+        
+        empresa.contratarUnMensajero(roberto)
+        empresa.contratarUnMensajero(neo)
+        
+        // Preparamos el paqueton para que esté pago
+        paqueton.destinos().clear()
+        paqueton.destinos().add(brooklyn)
+        paqueton.destinos().add(laMatrix)
+        paqueton.pagoParcial(200) 
+    }
+    
+    test "Averiguar si un paquete puede ser entregado por la empresa (Alguien puede)" {
+        neo.cargarCredito() 
+        // Neo puede pasar la matrix y brooklyn (pesa 0).
+        assert.that(empresa.puedeEntregar(paqueton))
+    }
+    
+    test "Obtener todos los mensajeros candidatos" {
+        neo.cargarCredito()
+        camion.acoplados(5)
+        roberto.cambiarVehiculo(camion) // Roberto no pasa por Brooklyn ni Matrix
+        
+        // Solo Neo debería poder
+        assert.equals([neo], empresa.mensajerosCandidatos(paqueton))
+    }
+    
+    test "La mensajeria tiene sobrepeso si el promedio supera 500kg" {
+        // Roberto con 2 acoplados pesa 90 + 1000 = 1090kg. Neo 0kg. Promedio = 545kg.
+        camion.acoplados(2)
+        roberto.cambiarVehiculo(camion)
+        
+        assert.that(empresa.tieneSobrepeso())
+    }
+    
+    test "Enviar un paquete exitosamente aumenta la facturacion" {
+        neo.cargarCredito()
+        empresa.enviar(paqueton) // Cuesta 200
+        
+        assert.equals(200, empresa.facturacion())
+        assert.that(empresa.paquetesPendientes().isEmpty())
+    }
+    
+    test "Enviar un paquete que no se puede entregar lo agrega a pendientes" {
+        neo.consumirSaldo() // Nadie puede pasar la Matrix
+        empresa.enviar(paqueton)
+        
+        assert.equals(0, empresa.facturacion())
+        assert.equals([paqueton], empresa.paquetesPendientes())
+    }
+    
+    test "Nuevos elementos (Bonus): Flash puede entregar la Caja Misteriosa" {
+        empresa.contratarUnMensajero(flash)
+        assert.that(empresa.puedeEntregar(cajaMisteriosa))
+        
+        empresa.enviar(cajaMisteriosa) // Cuesta 200
+        // La facturacion debería ser al menos 200 (depende de si se mandó algo más antes, pero al arrancar de cero es 200)
+        assert.equals(200, empresa.facturacion())
+    }
+}

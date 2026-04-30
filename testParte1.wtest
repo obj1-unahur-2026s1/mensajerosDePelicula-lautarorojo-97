@@ -1,0 +1,28 @@
+import paquetes.*
+import destinos.*
+import mensajeros.*
+import vehiculos.*
+import mensajeria.*
+
+describe "Parte 1: Destinos y Mensajeros" {
+    
+    test "Roberto (90kg) puede llevar un paquete pago en camion con 1 acoplado a Brooklyn" {
+        camion.acoplados(1) // El camion pesa 500
+        roberto.cambiarVehiculo(camion) // Roberto pesa 90 + 500 = 590
+        
+        paquetes.registrarPago()
+        paquetes.cambiarDestino(brooklyn) // Brooklyn deja pasar hasta 1000kg
+        
+        assert.that(paquetes.puedeSerEntregado(roberto))
+    }
+    
+    test "Neo con credito NO puede llevar un paquete que NO esta pago a la Matrix" {
+        neo.cargarCredito()
+        
+        paquetes.cancelarPago()
+        paquetes.cambiarDestino(laMatrix)
+        
+        // Aunque Neo puede entrar a la Matrix, el paquete no está pago
+        assert.notThat(paquetes.puedeSerEntregado(neo))
+    }
+}
